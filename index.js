@@ -3,12 +3,12 @@ const fs = require('fs').promises;
 
 const { Client, GatewayIntentBits } = require('discord.js');
 
-const client = new Client({ 
+const client = new Client({
     intents: [
-        GatewayIntentBits.Guilds,           
-        GatewayIntentBits.GuildMessages,    
-        GatewayIntentBits.MessageContent    
-    ] 
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
 //const cheeseTouchRoleID = '1470487754809807034';
@@ -45,7 +45,7 @@ client.on('messageCreate', async (message) => {
 
                 await repliedMember.roles.remove(cheeseTouchRoleID);
                 await member.roles.add(cheeseTouchRoleID);
-                
+
                 if (!stats[userId]) {
                     stats[userId] = { username: message.author.username, touches: 0 };
                 }
@@ -59,11 +59,31 @@ client.on('messageCreate', async (message) => {
         }
         if (message.channel.name == "bot-commands") {
             if (message.content[0] == "!") {
-                
+                const command = message.content.slice(1);
+                if (command === "cheeseboard") {
+                    let stats = await getData();
+
+                    const leaderboard = Object.entries(stats)
+                        .sort(([, a], [, b]) => b.touches - a.touches)
+                        .slice(0, 10);
+
+                    if (leaderboard.length === 0) {
+                        return message.reply("The cheeseboard is empty... for now. 🧀");
+                    }
+
+                    let response = "## 🧀 **THE CHEESEBOARD** 🧀\n";
+
+                    leaderboard.forEach(([userId, data], index) => {
+                        const name = data.username || "Unknown User";
+                        response += `${index + 1}. **${name}** - ${data.touches} touches\n`;
+                    });
+
+                    message.channel.send(response);
+                }
             }
         }
     }
-    catch (error){
+    catch (error) {
         console.error(error.message)
     }
 });

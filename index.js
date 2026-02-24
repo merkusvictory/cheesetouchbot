@@ -11,8 +11,8 @@ const client = new Client({
     ]
 });
 
-//const cheeseTouchRoleID = '1470487754809807034';
-const cheeseTouchRoleID = '1472731714882244771';
+const cheeseTouchRoleID = '1470487754809807034';
+// const cheeseTouchRoleID = '1472731714882244771'; 
 
 async function saveData(data) {
     await fs.writeFile('./stats.json', JSON.stringify(data, null, 4));
@@ -35,12 +35,20 @@ client.on('messageCreate', async (message) => {
 
     if (message.author.bot) return;
 
-    try {
-        if (message.reference) {
+    let repliedMember = null;
+
+    if (message.reference) {
+        try {
             const repliedMessage = await message.fetchReference();
             repliedMember = repliedMessage.member;
+        } catch (e) { console.log("Reference not found"); }
+    } else if (message.mentions.members.size > 0) {
+        repliedMember = message.mentions.members.first();
+    }
 
-            if (repliedMember && repliedMember.roles.cache.has(cheeseTouchRoleID)) {
+    if (repliedMember && repliedMember.id !== message.author.id) {
+        if (repliedMember.roles.cache.has(cheeseTouchRoleID)) {
+            try {
                 let stats = await getData();
 
                 await repliedMember.roles.remove(cheeseTouchRoleID);
@@ -53,11 +61,16 @@ client.on('messageCreate', async (message) => {
                 stats[userId].touches += 1;
                 await saveData(stats);
 
-                message.reply(`Oh no! **${message.author.username}** has the cheese touch 🧀! \nNobody reply to them!`)
-                console.log(`Cheese touch transferred from ${message.author.username} to ${repliedMessage.author.username}`)
+                message.reply(`Oh no! **${message.author.username}** has the cheese touch 🧀! \nNobody reply to them!`);
+                console.log(`Cheese touch transferred from ${repliedMember.user.username} to ${message.author.username}`);
+
+            } catch (e) {
+                console.error(e.message);
             }
         }
-        if (message.channel.name == "bot-commands") {
+    }
+    if (message.channel.name == "bot-commands") {
+        try {
             if (message.content[0] == "!") {
                 const command = message.content.slice(1);
                 if (command === "cheeseboard") {
@@ -81,11 +94,11 @@ client.on('messageCreate', async (message) => {
                     message.channel.send(response);
                 }
             }
+        } catch (e) {
+            console.log(error.message);
         }
     }
-    catch (error) {
-        console.error(error.message)
-    }
-});
+}
+);
 
 client.login(process.env.DISCORD_TOKEN);

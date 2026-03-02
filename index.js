@@ -78,7 +78,6 @@ client.on('messageCreate', async (message) => {
 
                     const leaderboard = Object.entries(stats)
                         .sort(([, a], [, b]) => b.touches - a.touches)
-                        .slice(0, 10);
 
                     if (leaderboard.length === 0) {
                         return message.reply("The cheeseboard is empty... for now. 🧀");
